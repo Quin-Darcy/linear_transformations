@@ -1,139 +1,199 @@
 // Constants
-let W = window.innerWidth - 20;
-let H = window.innerHeight - 20;
-let type;
-let style;
-let button;
-let slider;
+let W;
+let H;
 let SCALE = 0.1;
-let RADIUS = 1;
 let STYLE = 1;
-let RUN = false;
-let IMG = false;
-let c;
+let RADIUS = 1;
 
 // Arrays
 let points = [];
-let DEFAULT_MATRIX = [1, 0, 0, 1];
-let MATRIX = DEFAULT_MATRIX;
+let MATRIX = [];
 
-// Main Program
 function setup() {
-    c = createCanvas(W, H);
-    background(0);
-    textAlign(CENTER);
-    style = createSelect();
-    type = createSelect();
-    style.position(.01*W, 10);
-    type.position(0.24*W, 10);
-    style.option('-Choose Style-');
-    style.option('Fixed Radius and Color');
-    style.option('Variable Radius and Color');
-    type.option('-Choose Matrix-');
-    type.option('1');
-    type.option('2');
-    type.option('3');
-    type.option('4');
-    type.option('5');
-    type.option('6');
-    type.option('7');
-    type.option('8');
-    type.option('9');
-    type.option('10');
-    button = createButton('Run');
-    button.position(W-0.083*W, 10);
-    button.mousePressed(run);
-    slider = createSlider(1, 200, 0);
-    slider.position(W*0.5, 10);
-    slider.style('width', '15%');
-    background(0);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    createCanvas(W, H);
 }
 
 function mouseDragged() {
     points.push(new Coordinate(mouseX, mouseY));
 }
 
-function run() {
-    RUN = true;
-    background(0);
-    points = [];
-    SCALE = slider.value()/100;
-}
-
-function keyPressed() {
-    if (keyCode === UP_ARROW) {
-        IMG = true;
-    }
-}
-
 function draw() {
-    if (style.value() != '-Choose Style-' && type.value() != '-Choose Matrix-' && slider.value() != 0 && RUN) {
-        switch(style.value()) {
-            case 'Fixed Radius and Color':
-                STYLE = 1;
-                break;
-            case 'Variable Radius and Color':
-                STYLE = 2;
-                break;
+    for (let i = 0; i < points.length; i++) {
+        if (STYLE === 2) {
+            points[i].display1();
+            points[i].move();
+        } else if (STYLE === 1) {
+            points[i].display2();
+            points[i].move();
         }
-        switch(type.value()) {
-            case '1':
-                MATRIX = [1.01, -0.1, 0.98, 0.98];
-                break;
-            case '2':
-                MATRIX = [-1.01, 1.01, 0.98, -1.01];
-                break;
-            case '3':
-                MATRIX = [-1, 0.98, 1, -1];
-                break;
-            case '4':
-                MATRIX = [1.01, 0.01, 0.98, -1.01];
-                break;
-            case '5':
-                MATRIX = [-1.01, 0.001, 0.001, -1.01];
-                break;
-            case '6':
-                MATRIX = [0.98, -0.98, 0.98, 0.98];
-                break;
-            case '7':
-                MATRIX = [-1.1, -0.1, 0.1, 1.1];
-                break;
-            case '8':
-                MATRIX = [1, 0.1, 1, -1];
-                break;
-            case '9':
-                MATRIX = [0.997902826, -0.064729, 0.0421565323, 0.999111018];
-                break;
-        }
-        for (let i = 0; i < points.length; i++) {
-            if (STYLE === 1) {
-                points[i].display1();
-                points[i].move();
-            } else if (STYLE === 2) {
-                points[i].display2();
-                points[i].move();
-            }
-        } 
-    } else {
-        background(0);
-        points = [];
-    }
-    if (IMG) {
-        noLoop();
-        style.hide();
-        type.hide();
-        button.hide();
-        slider.hide();
-        saveCanvas(c, 'image', 'jpg');
-        style.show();
-        type.show();
-        button.show();
-        slider.show();
-        IMG = false;
-        loop();
     }
 }
 
-document.ontouchmove = function(event) {
-    event.preventDefault();
-};
+function reset() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    createCanvas(W, H);
+
+    points = [];
+}
+
+
+//Events
+window.addEventListener("resize", onResize);
+
+function onResize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    createCanvas(width, height);
+  }
+
+window.addEventListener('load', () => {
+    let editingMatrix = false;
+    let matrixInputDiv = document.getElementById('matrix-input');
+    let matrixInputWrapper = document.getElementById('matrix-input-wrapper');
+
+    function getExprs() {
+        let exprs = [];
+
+        for (let i = 1; i <= 2; i++) {
+            let row = [];
+            for (let j = 1; j <= 2; j++) {
+                row.push(document.getElementById('matrix-entry-' + i + j).value);
+            }
+            exprs.push(row);
+        }
+        return exprs;
+    }
+
+    function generateLaTeXMatrix() {
+        let res = String.raw`\( \begin{bmatrix}`;
+
+        let exprs = getExprs();
+    
+        for (let i = 0; i < 2; i++) {
+            for (let j = 0; j < 2; j++) {
+                let expr = exprs[i][j];
+                MATRIX.push(exprs[i][j]);
+                res += math.parse(expr).toTex();
+                if (j < 1) {
+                    res += '&';
+                } else if (i < 1) {
+                    res += '\\\\';
+                }
+            }
+        }
+
+        res += String.raw`\end{bmatrix} \)`;
+
+        let matrixExpresssionDiv = document.getElementById('matrix-expression');
+        matrixExpresssionDiv.textContent = res;
+  
+        renderMathInElement(matrixExpresssionDiv);
+    }
+
+    generateLaTeXMatrix();
+
+    document.getElementById('info-button').addEventListener('click', () => {
+        document.getElementById('info').classList.toggle('hidden');
+    });
+
+    document.getElementById('reset-button').addEventListener('click', () => {
+        reset();
+    });
+
+
+    let editMatrixButton = document.getElementById('edit-matrix-button');
+    editMatrixButton.addEventListener('click', () => {
+        if (editingMatrix) {
+            generateLaTeXMatrix();
+            editMatrixButton.textContent = 'Edit Matrix Expression';
+            let exprs = getExprs();
+            MATRIX[0] = exprs[0][0];
+            MATRIX[1] = exprs[0][1];
+            MATRIX[2] = exprs[1][0];
+            MATRIX[3] = exprs[1][1];
+            reset();
+            compiledExprs = exprs.map(row => row.map(expr => math.compile(expr)));
+        } else {
+            editMatrixButton.textContent = 'Update Matrix Expression';
+        }
+        editingMatrix = !editingMatrix;
+        matrixInputWrapper.classList.toggle('hidden');
+    });
+
+    document.getElementById('scale-dot').addEventListener('change', event => {
+        SCALE = parseFloat(event.target.value);
+    });
+
+    document.getElementById('style-select').addEventListener('change', event => {
+        if (event.target.value === '1') {
+            STYLE = 1;
+        } else if (event.target.value === '2') {
+            STYLE = 2;
+        }
+    });
+
+    document.getElementById('matrix-select').addEventListener('change', event => {
+        function setMatrixEntries(entries) {
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 2; j++) {
+                    let elementID = "matrix-entry-" + (i+1) + (j+1);
+                    document.getElementById(elementID).value = entries[i][j];
+                }
+            }
+        }
+        let choice = event.target.value;
+        if (choice == '1') {
+            setMatrixEntries([
+                ["1.01", "-0.1"],
+                ["0.98", "0.98"]
+            ]);
+        } else if (choice == '2') {
+            setMatrixEntries([
+                ["-1.01",  "1.01"],
+                ["0.98",  "-1.01"]
+            ]);
+        }  else if (choice == '3') {
+            setMatrixEntries([
+                ["-1", "0.98"],
+                ["1",    "-1"]
+            ]);
+        } else if (choice == '4') {
+            setMatrixEntries([
+                ["1.01",   "0.01"],
+                ["0.98",  "-1.01"]
+            ]);
+        } else if (choice == '5') {
+            setMatrixEntries([
+                ["-1.01",   "0.001"],
+                ["0.001",   "-1.01"]
+            ]);
+        } else if (choice == '6') {
+            setMatrixEntries([
+                ["0.98",   "-0.98"],
+                ["0.98",   "0.98"]
+            ]);
+        } else if (choice == '7') {
+            setMatrixEntries([
+                ["1.1", "-0.1"],
+                ["0.1",  "1.1"]
+            ]);
+        } else if (choice == '8') {
+            setMatrixEntries([
+                ["1",   "0.1"],
+                ["1",  "-1"]
+            ]);
+        } else if (choice == '9') {
+            setMatrixEntries([
+                ["0.997902826", "-0.0647298184"],
+                ["0.647298184",   "0.997902826"]
+            ]);
+        }
+    });
+
+    renderMathInElement(document.body);
+});
