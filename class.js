@@ -1,9 +1,9 @@
 class Coordinate {
     constructor(x, y) {
-        this.x = (x - width/2)*SCALE  || 0;
-        this.y = (y - height/2)*SCALE || 0;
-        this.ox = (x-width/2)*SCALE;
-        this.oy = (y-height/2)*SCALE;
+        this.x = (x - W/2)*SCALE  || 0;
+        this.y = (y - H/2)*SCALE || 0;
+        this.ox = (x - W/2)*SCALE;
+        this.oy = (y - H/2)*SCALE;
         this.row_0 = new p5.Vector(MATRIX[0], MATRIX[1]);
         this.row_1 = new p5.Vector(MATRIX[2], MATRIX[3]);
     }
